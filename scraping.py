@@ -1,14 +1,28 @@
-# Import Splinter and BeautifulSoup
+# Import Splinter, BeautifulSoup, Pandas, DateTime
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 import pandas as pd
+import datetime as dt
 
 def scrape_all():
     # Initiate headless driver for deployment
     executable_path = {'executable_path': '/opt/homebrew/bin/chromedriver'}
     browser = Browser('chrome', **executable_path, headless=True)   
 
-    
+    news_title, news_paragraph = mars_news(browser)
+
+    # Run all scraping functions and store results in dictionary 
+    data = {
+        "news_title": news_title,
+        "news_paragraph": news_paragraph,
+        "featured_image": featured_image(browser),
+        "facts": mars_facts(),
+        "last_modified": dt.datetime.now()
+    }
+
+    # Stop the webdriver and return data
+    browser.quit()
+    return data
 
 # Set the executable path and initialize the chrome browser in splinter (this was from earlier in module)
 #executable_path = {'executable_path': '/opt/homebrew/bin/chromedriver'}
@@ -63,20 +77,21 @@ def featured_image(browser):
     except AttributeError:
         return None
 
-        # Use the base URL to create an absolute URL
-        img_url = f'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/{img_url_rel}'
+    # Use the base URL to create an absolute URL
+    img_url = f'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/{img_url_rel}'
     
     return img_url
 
 
     # ## Mars Facts
+
 def mars_facts():
     # Add try/except for error handling
     try:
-        # use 'read_html" to scrape the facts table into a dataframe
+        # Use 'read_html' to scrape the facts table into a dataframe
         df = pd.read_html('https://data-class-mars-facts.s3.amazonaws.com/Mars_Facts/index.html')[0]
-   
-   except: BaseException 
+
+    except BaseException:
         return None
     
     # Assign columns and set index of DataFrames
@@ -86,8 +101,9 @@ def mars_facts():
     # Convert DataFrame into html format, add bootstrap
     return df.to_html()
 
-browser.quit()
 
-
+if __name__ == "__main__":
+    # If running as script, print scraped data
+    print(scrape_all())
 
 
